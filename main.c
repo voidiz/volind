@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+
 #include <pulse/pulseaudio.h>
+
+#include <cairo/cairo.h>
+#include <cairo/cairo-xlib.h>
+
+#include <X11/Xlib.h>
 
 // requires libpulse-dev
 
@@ -9,14 +15,20 @@ pa_mainloop* m;
 pa_mainloop_api* m_api;
 pa_context* c;
 
+cairo_surface_t *sfc;
+
 void quit()
 {
     if (c) {
         pa_context_disconnect(c);
         pa_context_unref(c);
     }
-
     if (m) pa_mainloop_free(m);
+
+    Display *dsp = cairo_xlib_surface_get_display(sfc);
+    if (sfc) cairo_surface_destroy(sfc);
+    if (dsp) XCloseDisplay(dsp);
+
     exit(0);
 }
 
@@ -111,6 +123,31 @@ int init_pulse()
 }
 
 // END PULSE
+
+// BEGIN CAIRO
+
+cairo_surface_t *create_x11_surface(int x, int y)
+{
+    Display *dsp;
+    Drawable da;
+    int screen;
+
+    if ((dsp = XOpenDisplay(NULL)) == NULL)
+        quit();
+    screen = DefaultScreen(dsp);
+    da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp),
+            0, 0, x, y, 0, 0, 0);
+    XSelectInput(dsp, da, ButtonPressMask | KeyPressMask);
+    XMapWindow(dsp, da);
+
+    sfc = cairo_xlib_surface_create(dsp, da,
+            DefaultVisual(dsp, screen), x, y);
+    cairo_xlib_surface_set_size(sfc, x, y);
+
+    return sfc;
+}
+
+// END CAIRO
 
 void sig_handler(int signum)
 {
