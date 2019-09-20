@@ -26,7 +26,7 @@ pa_context* c;
 cairo_surface_t *sfc;
 cairo_t *ctx;
 
-float cur_vol, bar_vol;
+float cur_vol;
 
 void quit()
 {
@@ -76,47 +76,6 @@ cairo_surface_t *create_x11_surface(int x, int y)
     return sfc;
 }
 
-int animate()
-{
-    /* float vol_diff = cur_vol - bar_vol; */
-    /* unsigned long int frame_duration = 1000 / fabsf(vol_diff); */
-    /* struct timespec ts = {0, frame_duration}; */
-    /* float delta_vol = vol_diff / frame_duration; */
-    float vol_diff = cur_vol - bar_vol;
-    float delta_vol = vol_diff / 60;
-    struct timespec ts = {0, 1666667};
-
-    int frames = 0;
-
-    /* printf("voldiff: %f dvol: %f\n", vol_diff, delta_vol); */
-    /* printf("voldiff: %f framedur: %ld dvol: %f\n", vol_diff, frame_duration, delta_vol); */
-    /* for (; fabsf(vol_diff) > 2; bar_vol += delta_vol) { */
-    for (int i = 0; i < 60; ++i) {
-        frames++;
-        /* printf("frames: %d\n", frames); */
-        cairo_push_group(ctx);
-        cairo_set_source_rgb (ctx, 255, 255, 255);
-        cairo_paint(ctx);
-
-        cairo_set_line_width (ctx, 5);
-        cairo_set_source_rgb (ctx, 255, 0, 0);
-        cairo_move_to(ctx, 0 + 10, POPUP_HEIGHT - 10);
-        cairo_line_to(ctx, (POPUP_WIDTH - 20) * (bar_vol / 100) + 10, POPUP_HEIGHT - 10);
-        cairo_stroke (ctx);
-        cairo_pop_group_to_source(ctx);
-        cairo_paint(ctx);
-        cairo_surface_flush(sfc);
-
-        /* vol_diff = cur_vol - bar_vol; */
-        /* printf("voldiff: %f dvol: %f barvol: %f\n", vol_diff, delta_vol, bar_vol); */
-        bar_vol += delta_vol;
-        nanosleep(&ts, NULL);
-    }
-    /* bar_vol = cur_vol; */
-
-    return 0;
-}
-
 // END CAIRO
 
 // BEGIN PULSE
@@ -128,7 +87,6 @@ void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
     cur_vol = (float)pa_cvolume_avg(&(i->volume)) / (float)PA_VOLUME_NORM * 100.0;
     /* printf("Sink: %s, Volume: %.0f%%, Muted: %s\n", i->name, cur_vol, */
     /*         i->mute ? "yes" : "no"); */  
-    animate();
 }
 
 void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
@@ -145,8 +103,7 @@ void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
 void context_state_callback(pa_context *c, void *userdata)
 {
     assert(c);
-    switch (pa_context_get_state(c))
-    {
+    switch (pa_context_get_state(c)) {
         case PA_CONTEXT_SETTING_NAME:
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_UNCONNECTED:
@@ -205,16 +162,46 @@ int init_pulse()
 
 int run()
 {
+    int ret = 1;
+    struct timespec ts = {0, 50000000};
+    float vol_diff, delta_vol, bar_vol = 0;
+
     sfc = create_x11_surface(POPUP_WIDTH, POPUP_HEIGHT);
     ctx = cairo_create(sfc);
 
-    int ret = 1;
-    while (1) {
-        if (pa_mainloop_iterate(m, 1, &ret) < 0)
+    for (;;) {
+        if (pa_mainloop_iterate(m, 0, &ret) < 0)
             fprintf(stderr, "pa_mainloop_iterate() error\n");
+
+        delta_vol = 1.0;
+        vol_diff = cur_vol - bar_vol;
+        if (vol_diff < 1.0 && vol_diff > -1) {
+            delta_vol = vol_diff;
+        } else if (vol_diff <= -1) {
+            delta_vol = -1.0;
+        }
+
+        /* fprintf(stderr, "vol_diff: %f\n", vol_diff); */
+
+        if (vol_diff != 0) {
+            cairo_push_group(ctx);
+            cairo_set_source_rgb (ctx, 255, 255, 255);
+            cairo_paint(ctx);
+
+            cairo_set_line_width (ctx, 5);
+            cairo_set_source_rgb (ctx, 255, 0, 0);
+            cairo_move_to(ctx, 0 + 10, POPUP_HEIGHT - 10);
+            cairo_line_to(ctx, (POPUP_WIDTH - 20) * (bar_vol / 100) + 10, POPUP_HEIGHT - 10);
+            cairo_stroke (ctx);
+            cairo_pop_group_to_source(ctx);
+            cairo_paint(ctx);
+            cairo_surface_flush(sfc);
+
+            bar_vol += delta_vol;
+        }
+
+        nanosleep(&ts, NULL);
     }
-    /* if (pa_mainloop_run(m, &ret) < 0) */
-    /*     fprintf(stderr, "pa_mainloop_run() failed\n"); */
 
     return ret;
 }
