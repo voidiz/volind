@@ -9,18 +9,16 @@ term_indicator(indicator_t *i)
     if (dsp) XCloseDisplay(dsp);
 }
 
-indicator_t
-init_indicator(int w, int h)
+int
+init_indicator(indicator_t *i, int w, int h)
 {
-    indicator_t ind;
     Display *dsp;
     Drawable da;
     Screen *screen;
     int screen_num;
 
     if ((dsp = XOpenDisplay(NULL)) == NULL) {
-        ind.error = -1;
-        return ind;
+        return -1;
     }
 
     screen_num = DefaultScreen(dsp);
@@ -37,9 +35,10 @@ init_indicator(int w, int h)
     /* XSelectInput(dsp, da, ButtonPressMask | KeyPressMask); */
     XMapWindow(dsp, da);
 
-    ind.sfc = cairo_xlib_surface_create(dsp, da,
+    i->sfc = cairo_xlib_surface_create(dsp, da,
             DefaultVisual(dsp, screen_num), w, h);
-    cairo_xlib_surface_set_size(ind.sfc, w, h);
+    cairo_xlib_surface_set_size(i->sfc, w, h);
+    i->ctx = cairo_create(i->sfc);
 
-    return ind;
+    return 0;
 }

@@ -6,12 +6,14 @@ void
 sink_info_callback(pa_context *c, const pa_sink_info *i, int eol, 
         void *userdata)
 {
-    audio_t *a = (audio_t *) userdata;
+    audio_t *a = userdata;
     if (eol > 0) return;
+    /* printf("%.0f%%", (float) pa_cvolume_avg(&(i->volume)) / */ 
+    /*     (float) PA_VOLUME_NORM * 100.0); */
     a->cur_vol = (float) pa_cvolume_avg(&(i->volume)) / 
         (float) PA_VOLUME_NORM * 100.0;
-    /* printf("Sink: %s, Volume: %.0f%%, Muted: %s\n", i->name, cur_vol, */
-    /*         i->mute ? "yes" : "no"); */  
+    printf("Sink: %s, Volume: %.0f%%, Muted: %s\n", i->name, a->cur_vol,
+            i->mute ? "yes" : "no");  
 }
 
 void
@@ -31,30 +33,34 @@ void
 context_state_callback(pa_context *c, void *userdata)
 {
     assert(c);
+    audio_t *aud = userdata;
+
     switch (pa_context_get_state(c)) {
         case PA_CONTEXT_SETTING_NAME:
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_UNCONNECTED:
         case PA_CONTEXT_AUTHORIZING:
+        default:
+            aud->pa_ready = 0;
             break;
 
         case PA_CONTEXT_READY:
-            fprintf(stderr, "Connection established.\n");
             pa_context_set_subscribe_callback(c, subscription_callback,
                     userdata);
             pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
+            fprintf(stderr, "Connection established.\n");
+            aud->pa_ready = 1;
             break;
 
         case PA_CONTEXT_TERMINATED:
+            term_audio(aud);
             fprintf(stderr, "Connection terminated.\n");
-            term_audio((audio_t *) userdata);
             break;
 
         case PA_CONTEXT_FAILED:
-        default:
+            term_audio(aud);
             fprintf(stderr, "Connection failed: %s\n", 
                     pa_strerror(pa_context_errno(c)));
-            term_audio((audio_t *) userdata);
             break;
     }
 }
@@ -70,38 +76,34 @@ term_audio(audio_t *a)
     if (a->m_loop) pa_mainloop_free(a->m_loop);
 }
 
-audio_t
-init_audio()
+int
+init_audio(audio_t *a)
 {
-    audio_t a;
-
-    a.m_loop = pa_mainloop_new();
-    if (!a.m_loop) {
+    a->m_loop = pa_mainloop_new();
+    if (!a->m_loop) {
         fprintf(stderr, "pa_mainloop_new() failed\n");
-        a.error = -1;
-        return a;
+        return -1;
     }
 
-    a.m_loop_api = pa_mainloop_get_api(a.m_loop);
-    if (!a.m_loop_api) {
+    a->m_loop_api = pa_mainloop_get_api(a->m_loop);
+    if (!a->m_loop_api) {
         fprintf(stderr, "pa_mainloop_get_api() failed\n");
-        a.error = -1;
-        return a;
+        return -1;
     }
 
-    a.ctx = pa_context_new(a.m_loop_api, "Volume monitor");
-    if (!a.ctx) {
+    a->ctx = pa_context_new(a->m_loop_api, "Volume monitor");
+    if (!a->ctx) {
         fprintf(stderr, "pa_context_new() failed\n");
-        a.error = -1;
-        return a;
+        return -1;
     }
 
-    pa_context_set_state_callback(a.ctx, context_state_callback, &a);
-    if (pa_context_connect(a.ctx, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL) < 0) {
+    pa_context_set_state_callback(a->ctx, context_state_callback, a);
+    if (pa_context_connect(a->ctx, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL) < 0) {
         fprintf(stderr, "pa_context_connect() failed\n");
-        a.error = -1;
-        return a;
+        return -1;
     }
 
-    return a;
+    a->pa_ready = 0;
+
+    return 0;
 }

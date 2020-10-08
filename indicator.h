@@ -16,8 +16,8 @@ typedef struct {
     int error;
 } indicator_t;
 
-indicator_t
-init_indicator(int w, int h);
+int
+init_indicator(indicator_t *i, int w, int h);
 
 void
 term_indicator(indicator_t *i);
