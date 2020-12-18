@@ -7,17 +7,13 @@
 static audio_t aud;
 static indicator_t ind;
 
-void
-quit()
-{
+void quit() {
     term_audio(&aud);
     term_indicator(&ind);
     exit(0);
 }
 
-int
-run()
-{
+int run() {
     int ret = 1;
     struct timespec ts = {0, 50000000};
     float vol_diff, delta_vol, bar_vol = 0;
@@ -65,8 +61,8 @@ run()
             cairo_set_line_width(ind.ctx, 5);
             cairo_set_source_rgb(ind.ctx, 255, 0, 0);
             cairo_move_to(ind.ctx, 0 + 10, IND_H - 10);
-            cairo_line_to(ind.ctx, (IND_W - 20) * (bar_vol / 100) + 10, 
-                    IND_H - 10);
+            cairo_line_to(ind.ctx, (IND_W - 20) * (bar_vol / 100) + 10,
+                          IND_H - 10);
             cairo_stroke(ind.ctx);
 
             cairo_pop_group_to_source(ind.ctx);
@@ -82,16 +78,12 @@ run()
     return ret;
 }
 
-void
-sig_handler(int signum)
-{
+void sig_handler(int signum) {
     fprintf(stderr, "Terminating...\n");
     quit();
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     struct sigaction sa;
     sa.sa_handler = sig_handler;
     sigemptyset(&sa.sa_mask);

@@ -4,28 +4,24 @@
 #include <pulse/pulseaudio.h>
 
 typedef struct {
-    pa_context          *ctx;
-    pa_mainloop         *m_loop;
-    pa_mainloop_api     *m_loop_api;
+    pa_context *ctx;
+    pa_mainloop *m_loop;
+    pa_mainloop_api *m_loop_api;
 
     float cur_vol;
     int pa_ready;
 } audio_t;
 
-void
-sink_info_callback(pa_context *c, const pa_sink_info *i, int eol, void *userdata);
+void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
+                        void *userdata);
 
-void
-subscription_callback(pa_context *c, pa_subscription_event_type_t t, 
-        uint32_t idx, void *userdata);
+void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
+                           uint32_t idx, void *userdata);
 
-void
-context_state_callback(pa_context *c, void *userdata);
+void context_state_callback(pa_context *c, void *userdata);
 
-int
-init_audio(audio_t *a);
+int init_audio(audio_t *a);
 
-void
-term_audio(audio_t *a);
+void term_audio(audio_t *a);
 
 #endif

@@ -1,8 +1,8 @@
 #ifndef INDICATOR_H
 #define INDICATOR_H
 
-#include <cairo/cairo.h>
 #include <cairo/cairo-xlib.h>
+#include <cairo/cairo.h>
 
 #include <X11/Xlib.h>
 
@@ -16,10 +16,8 @@ typedef struct {
     int error;
 } indicator_t;
 
-int
-init_indicator(indicator_t *i, int w, int h);
+int init_indicator(indicator_t *i, int w, int h);
 
-void
-term_indicator(indicator_t *i);
+void term_indicator(indicator_t *i);
 
 #endif
