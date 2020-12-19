@@ -1,16 +1,15 @@
 CC=gcc
-CFLAGS=-Wall -Wextra `pkg-config --cflags libpulse cairo x11`
-LDLIBS=-lm `pkg-config --libs libpulse cairo x11`
+CFLAGS=`pkg-config --cflags libpulse cairo x11 xrandr`
+LDLIBS=-lm `pkg-config --libs libpulse cairo x11 xrandr`
 LDFLAGS=
 
 OBJS=thing.o audio.o indicator.o
 
-debug : CFLAGS +=-g
-debug : LDFLAGS +=-g
-debug : all
-
 all : $(OBJS)
 	$(CC) $(LDLIBS) $(OBJS) -o thing $(LDFLAGS)
+
+debug : CFLAGS +=-g -Wall -Wextra -DDEBUG
+debug : all
 
 thing.o : audio.h indicator.h
 audio.o : audio.h

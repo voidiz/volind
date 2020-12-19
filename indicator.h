@@ -1,10 +1,13 @@
 #ifndef INDICATOR_H
 #define INDICATOR_H
 
+#include <stdlib.h>
+
 #include <cairo/cairo-xlib.h>
 #include <cairo/cairo.h>
 
 #include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
 
 #define IND_W 225
 #define IND_H 250

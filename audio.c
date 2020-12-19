@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "debug.h"
 
 #include <stdio.h>
 
@@ -11,8 +12,9 @@ void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
     /*     (float) PA_VOLUME_NORM * 100.0); */
     a->cur_vol =
         (float)pa_cvolume_avg(&(i->volume)) / (float)PA_VOLUME_NORM * 100.0;
-    printf("Sink: %s, Volume: %.0f%%, Muted: %s\n", i->name, a->cur_vol,
-           i->mute ? "yes" : "no");
+
+    DEBUG_PRINT("Sink: %s, Volume: %.0f%%, Muted: %s\n", i->name, a->cur_vol,
+                i->mute ? "yes" : "no");
 }
 
 void subscription_callback(pa_context *c, pa_subscription_event_type_t t,

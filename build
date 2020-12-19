@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-gcc -o thing main.c $(pkg-config --libs --cflags libpulse cairo x11)

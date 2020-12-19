@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "debug.h"
 #include "indicator.h"
 
 #include <stdio.h>
@@ -47,10 +48,8 @@ int run() {
             delta_vol = -1.0;
         }
 
-        /* fprintf(stderr, "vol_diff: %f\n", vol_diff); */
-
         if (vol_diff != 0.0) {
-            fprintf(stderr, "vol_diff: %f\n", vol_diff);
+            DEBUG_PRINT("vol_diff: %f\n", vol_diff);
             cairo_push_group(ind.ctx);
 
             // Background
