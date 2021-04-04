@@ -17,4 +17,4 @@ indicator.o : indicator.h
 
 .PHONY : clean
 clean :
-	rm -f thing $(OBJS)
+	rm -f thing $(OBJS) vgcore.*

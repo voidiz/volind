@@ -8,13 +8,13 @@
 static audio_t aud;
 static indicator_t ind;
 
-void quit() {
+static void quit() {
     term_audio(&aud);
     term_indicator(&ind);
     exit(0);
 }
 
-int run() {
+static int run() {
     int ret = 1;
     struct timespec ts = {0, 50000000};
     float vol_diff, delta_vol, bar_vol = 0;
@@ -77,7 +77,7 @@ int run() {
     return ret;
 }
 
-void sig_handler(int signum) {
+static void sig_handler() {
     fprintf(stderr, "Terminating...\n");
     quit();
 }

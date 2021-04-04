@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
-                        void *userdata) {
+static void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
+                               void *userdata) {
     audio_t *a = userdata;
     if (eol > 0)
         return;
@@ -17,8 +17,8 @@ void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
                 i->mute ? "yes" : "no");
 }
 
-void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
-                           uint32_t idx, void *userdata) {
+static void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
+                                  uint32_t idx, void *userdata) {
     unsigned int evf = t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK;
     if (evf == PA_SUBSCRIPTION_EVENT_SINK) {
         pa_operation *o;
@@ -28,7 +28,7 @@ void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
     }
 }
 
-void context_state_callback(pa_context *c, void *userdata) {
+static void context_state_callback(pa_context *c, void *userdata) {
     assert(c);
     audio_t *aud = userdata;
 
@@ -49,12 +49,10 @@ void context_state_callback(pa_context *c, void *userdata) {
         break;
 
     case PA_CONTEXT_TERMINATED:
-        term_audio(aud);
         fprintf(stderr, "Connection terminated.\n");
         break;
 
     case PA_CONTEXT_FAILED:
-        term_audio(aud);
         fprintf(stderr, "Connection failed: %s\n",
                 pa_strerror(pa_context_errno(c)));
         break;
@@ -65,10 +63,13 @@ void term_audio(audio_t *a) {
     if (a->ctx) {
         pa_context_disconnect(a->ctx);
         pa_context_unref(a->ctx);
+        a->ctx = NULL;
     }
 
-    if (a->m_loop)
+    if (a->m_loop) {
         pa_mainloop_free(a->m_loop);
+        a->m_loop = NULL;
+    }
 }
 
 int init_audio(audio_t *a) {
