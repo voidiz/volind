@@ -1,53 +1,35 @@
 #include "indicator.h"
 #include "debug.h"
+#include <stdio.h>
 
-void term_indicator(indicator_t *i) {
-    if (i->ctx)
-        cairo_destroy(i->ctx);
-
-    Display *dsp = cairo_xlib_surface_get_display(i->sfc);
-
-    if (i->sfc)
-        cairo_surface_destroy(i->sfc);
-
-    if (dsp)
-        XCloseDisplay(dsp);
+void cse(int ret_val) {
+    if (ret_val < 0) {
+        term_indicator(0);
+        exit(1);
+    }
 }
 
-int init_indicator(indicator_t *i, int w, int h) {
-    Display *dsp;
-    Drawable da;
-    int screen_num;
-
-    if ((dsp = XOpenDisplay(NULL)) == NULL) {
-        return -1;
+void *csp(void *possibly_null) {
+    if (possibly_null == NULL) {
+        term_indicator(0);
+        exit(1);
     }
 
-    screen_num = DefaultScreen(dsp);
+    return possibly_null;
+}
 
-    /* Get dimensions of primary monitor */
-    int nsizes;
-    XRRScreenSize *sizes = XRRSizes(dsp, 0, &nsizes);
+void term_indicator(int silent) {
+    if (!silent) {
+        fprintf(stderr, "SDL Error: %s\n", SDL_GetError());
+    }
 
-    DEBUG_PRINT("Monitor width %d, height %d\n", sizes->width, sizes->height);
+    SDL_Quit();
+}
 
-    /* Drawable for indicator */
-    da = XCreateSimpleWindow(
-        dsp, XDefaultRootWindow(dsp), sizes->width / 2 - w / 2,
-        sizes->height / 2 - h / 2, w, h, 0, 0, BlackPixel(dsp, 0));
-
-    /* Make the window manager ignore the window */
-    XSetWindowAttributes winattr;
-    winattr.override_redirect = 1;
-    XChangeWindowAttributes(dsp, da, CWOverrideRedirect, &winattr);
-
-    /* XSelectInput(dsp, da, ButtonPressMask | KeyPressMask); */
-    XMapWindow(dsp, da);
-
-    i->sfc = cairo_xlib_surface_create(dsp, da, DefaultVisual(dsp, screen_num),
-                                       w, h);
-    cairo_xlib_surface_set_size(i->sfc, w, h);
-    i->ctx = cairo_create(i->sfc);
-
-    return 0;
+void init_indicator(indicator_t *i, int w, int h) {
+    cse(SDL_Init(SDL_INIT_VIDEO));
+    i->window = csp(SDL_CreateWindow(
+        "thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
+        SDL_WINDOW_BORDERLESS | SDL_WINDOW_TOOLTIP));
+    i->renderer = csp(SDL_CreateRenderer(i->window, -1, 0));
 }

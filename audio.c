@@ -2,6 +2,7 @@
 #include "debug.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 static void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
                                void *userdata) {
@@ -70,6 +71,14 @@ void term_audio(audio_t *a) {
         pa_mainloop_free(a->m_loop);
         a->m_loop = NULL;
     }
+}
+
+float get_volume(audio_t *a, int block) {
+    if (pa_mainloop_iterate(a->m_loop, block, NULL) < 0) {
+        return -1.0f;
+    }
+
+    return a->cur_vol;
 }
 
 int init_audio(audio_t *a) {

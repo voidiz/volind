@@ -1,26 +1,33 @@
 #ifndef INDICATOR_H
 #define INDICATOR_H
 
-#include <stdlib.h>
-
-#include <cairo/cairo-xlib.h>
-#include <cairo/cairo.h>
-
-#include <X11/Xlib.h>
-#include <X11/extensions/Xrandr.h>
+#include <SDL2/SDL.h>
 
 #define IND_W 225
 #define IND_H 250
 
 typedef struct {
-    cairo_surface_t *sfc;
-    cairo_t *ctx;
+    SDL_Renderer *renderer;
+    SDL_Window *window;
 
     int error;
 } indicator_t;
 
-int init_indicator(indicator_t *i, int w, int h);
+/*
+ * Check SDL error, quit on error.
+ */
+void cse(int ret_val);
 
-void term_indicator(indicator_t *i);
+/*
+ * Check SDL error but ptr. Quit on error, otherwise return ptr.
+ */
+void *csp(void *possibly_null);
+
+/*
+ * Initialize SDL, exits on error.
+ */
+void init_indicator(indicator_t *i, int w, int h);
+
+void term_indicator(int silent);
 
 #endif

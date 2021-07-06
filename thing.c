@@ -3,36 +3,70 @@
 #include "indicator.h"
 
 #include <stdio.h>
-#include <time.h>
 
 static audio_t aud;
 static indicator_t ind;
 
-static void quit() {
+static void quit(int code) {
     term_audio(&aud);
-    term_indicator(&ind);
-    exit(0);
+    term_indicator(1);
+    exit(code);
+}
+
+static void draw(float *bar_vol) {
+    SDL_ShowWindow(ind.window);
+
+    float vol_diff;
+    do {
+        float cur_vol = get_volume(&aud, 0);
+        if (cur_vol < 0) {
+            quit(1);
+        }
+
+        vol_diff = cur_vol - *bar_vol;
+
+        float delta_vol = 1.0f;
+        if (fabsf(vol_diff) < 1.0f) {
+            delta_vol = vol_diff;
+        } else if (vol_diff <= -1.0f) {
+            delta_vol = -1.0f;
+        }
+
+        // Background
+        SDL_SetRenderDrawColor(ind.renderer, 255, 255, 255, 0);
+        SDL_RenderClear(ind.renderer);
+
+        // Bar
+        SDL_SetRenderDrawColor(ind.renderer, 255, 0, 0, 0);
+        SDL_Rect bar = {.x = 10,
+                        .y = IND_H - 20,
+                        .w = (IND_W - 20) * (*bar_vol / 100),
+                        .h = 5};
+        SDL_RenderFillRect(ind.renderer, &bar);
+
+        SDL_RenderPresent(ind.renderer);
+        SDL_Delay(20);
+        *bar_vol += delta_vol;
+    } while (vol_diff != 0.0f);
+
+    SDL_Delay(500);
+    SDL_HideWindow(ind.window);
 }
 
 static int run() {
-    int ret = 1;
-    struct timespec ts = {0, 50000000};
-    float vol_diff, delta_vol, bar_vol = 0;
+    // Exits on fail
+    init_indicator(&ind, IND_W, IND_H);
 
     if (init_audio(&aud) < 0) {
         fprintf(stderr, "init_audio() error\n");
-        quit();
+        quit(1);
     }
 
-    if (init_indicator(&ind, IND_W, IND_H) < 0) {
-        fprintf(stderr, "init_indicator() error\n");
-        quit();
-    }
-
+    float bar_vol = 0;
     for (;;) {
-        if (pa_mainloop_iterate(aud.m_loop, 0, &ret) < 0) {
-            fprintf(stderr, "pa_mainloop_iterate() error\n");
-            quit();
+        // Block until new volume
+        if (get_volume(&aud, 1) < 0) {
+            quit(1);
         }
 
         // Iterate again if not ready
@@ -40,46 +74,19 @@ static int run() {
             continue;
         }
 
-        delta_vol = 1.0;
-        vol_diff = aud.cur_vol - bar_vol;
-        if (vol_diff < 1.0 && vol_diff > -1.0) {
-            delta_vol = vol_diff;
-        } else if (vol_diff <= -1.0) {
-            delta_vol = -1.0;
+        // Animate to new volume (aud.cur_vol) from bar_vol
+        // and update bar_vol
+        if (bar_vol != aud.cur_vol) {
+            draw(&bar_vol);
         }
-
-        if (vol_diff != 0.0) {
-            DEBUG_PRINT("vol_diff: %f\n", vol_diff);
-            cairo_push_group(ind.ctx);
-
-            // Background
-            cairo_set_source_rgb(ind.ctx, 255, 255, 255);
-            cairo_paint(ind.ctx);
-
-            // Bar
-            cairo_set_line_width(ind.ctx, 5);
-            cairo_set_source_rgb(ind.ctx, 255, 0, 0);
-            cairo_move_to(ind.ctx, 0 + 10, IND_H - 10);
-            cairo_line_to(ind.ctx, (IND_W - 20) * (bar_vol / 100) + 10,
-                          IND_H - 10);
-            cairo_stroke(ind.ctx);
-
-            cairo_pop_group_to_source(ind.ctx);
-            cairo_paint(ind.ctx);
-            cairo_surface_flush(ind.sfc);
-
-            bar_vol += delta_vol;
-        }
-
-        nanosleep(&ts, NULL);
     }
 
-    return ret;
+    return 0;
 }
 
 static void sig_handler() {
     fprintf(stderr, "Terminating...\n");
-    quit();
+    quit(0);
 }
 
 int main(int argc, char *argv[]) {

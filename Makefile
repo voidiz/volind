@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=`pkg-config --cflags libpulse cairo x11 xrandr`
-LDLIBS=-lm `pkg-config --libs libpulse cairo x11 xrandr`
+CFLAGS=`pkg-config --cflags libpulse sdl2`
+LDLIBS=-lm `pkg-config --libs libpulse sdl2`
 LDFLAGS=
 
 OBJS=thing.o audio.o indicator.o

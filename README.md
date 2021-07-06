@@ -2,4 +2,4 @@
 
 # building
 ## prerequisites
-- libx11, libxrandr, cairo, libpulse
+- libsdl2, libpulse
