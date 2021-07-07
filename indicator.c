@@ -43,7 +43,7 @@ void draw_indicator(indicator_t *i, int progress, int alpha) {
 void init_indicator(indicator_t *i, int w, int h) {
     cse(SDL_Init(SDL_INIT_VIDEO));
     i->window = csp(SDL_CreateWindow(
-        "thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
+        "volind", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
         SDL_WINDOW_BORDERLESS | SDL_WINDOW_TOOLTIP));
     i->renderer = csp(SDL_CreateRenderer(i->window, -1, 0));
 }
