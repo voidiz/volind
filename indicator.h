@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 
 #define IND_W 450
-#define IND_H 500
+#define IND_H 50
 #define FADE_OUT_DURATION_MS 500
 
 typedef struct {

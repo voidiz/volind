@@ -32,11 +32,11 @@ void draw_indicator(indicator_t *i, int progress, int alpha) {
     SDL_RenderClear(i->renderer);
 
     // Bar
-    SDL_SetRenderDrawColor(i->renderer, 255, 0, 0, alpha);
+    SDL_SetRenderDrawColor(i->renderer, 102, 153, 204, alpha);
     SDL_Rect bar = {.x = 10,
-                    .y = IND_H - 40,
-                    .w = (IND_W - 40) * (progress / 100.0f),
-                    .h = 10};
+                    .y = 10,
+                    .w = (IND_W - 20) * (progress / 100.0f),
+                    .h = IND_H - 20};
     SDL_RenderFillRect(i->renderer, &bar);
 }
 
