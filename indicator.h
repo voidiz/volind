@@ -3,8 +3,9 @@
 
 #include <SDL2/SDL.h>
 
-#define IND_W 225
-#define IND_H 250
+#define IND_W 450
+#define IND_H 500
+#define FADE_OUT_DURATION_MS 500
 
 typedef struct {
     SDL_Renderer *renderer;
@@ -30,4 +31,9 @@ void init_indicator(indicator_t *i, int w, int h);
 
 void term_indicator(int silent);
 
-#endif
+/*
+ * 0 is empty, 100 is complete.
+ */
+void draw_indicator(indicator_t *i, int progress, int alpha);
+
+#endif // INDICATOR_H

@@ -6,16 +6,26 @@
 
 static void sink_info_callback(pa_context *c, const pa_sink_info *i, int eol,
                                void *userdata) {
-    audio_t *a = userdata;
-    if (eol > 0)
+    if (eol > 0) {
         return;
-    /* printf("%.0f%%", (float) pa_cvolume_avg(&(i->volume)) / */
-    /*     (float) PA_VOLUME_NORM * 100.0); */
+    }
+
+    audio_t *a = userdata;
     a->cur_vol =
         (float)pa_cvolume_avg(&(i->volume)) / (float)PA_VOLUME_NORM * 100.0;
 
     DEBUG_PRINT("Sink: %s, Volume: %.0f%%, Muted: %s\n", i->name, a->cur_vol,
                 i->mute ? "yes" : "no");
+}
+
+static void server_info_callback(pa_context *c, const pa_server_info *i,
+                                 void *userdata) {
+    // Query volume of default sink
+    DEBUG_PRINT("Default sink: %s\n", i->default_sink_name);
+    pa_operation *o;
+    o = pa_context_get_sink_info_by_name(c, i->default_sink_name,
+                                         &sink_info_callback, userdata);
+    pa_operation_unref(o);
 }
 
 static void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
@@ -27,6 +37,12 @@ static void subscription_callback(pa_context *c, pa_subscription_event_type_t t,
                                               userdata);
         pa_operation_unref(o);
     }
+}
+
+static void query_volume(audio_t *a) {
+    pa_operation *o;
+    o = pa_context_get_server_info(a->ctx, &server_info_callback, a);
+    pa_operation_unref(o);
 }
 
 static void context_state_callback(pa_context *c, void *userdata) {
@@ -47,6 +63,7 @@ static void context_state_callback(pa_context *c, void *userdata) {
         pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
         fprintf(stderr, "Connection established.\n");
         aud->pa_ready = 1;
+        query_volume(aud);
         break;
 
     case PA_CONTEXT_TERMINATED:
@@ -73,9 +90,10 @@ void term_audio(audio_t *a) {
     }
 }
 
-float get_volume(audio_t *a, int block) {
+float iterate_and_get_volume(audio_t *a, int block) {
     if (pa_mainloop_iterate(a->m_loop, block, NULL) < 0) {
-        return -1.0f;
+        term_audio(a);
+        exit(1);
     }
 
     return a->cur_vol;
@@ -107,6 +125,7 @@ int init_audio(audio_t *a) {
     }
 
     a->pa_ready = 0;
+    a->cur_vol = -1.0f;
 
     return 0;
 }

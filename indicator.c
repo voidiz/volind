@@ -26,6 +26,20 @@ void term_indicator(int silent) {
     SDL_Quit();
 }
 
+void draw_indicator(indicator_t *i, int progress, int alpha) {
+    // Background
+    SDL_SetRenderDrawColor(i->renderer, 255, 255, 255, alpha);
+    SDL_RenderClear(i->renderer);
+
+    // Bar
+    SDL_SetRenderDrawColor(i->renderer, 255, 0, 0, alpha);
+    SDL_Rect bar = {.x = 10,
+                    .y = IND_H - 40,
+                    .w = (IND_W - 40) * (progress / 100.0f),
+                    .h = 10};
+    SDL_RenderFillRect(i->renderer, &bar);
+}
+
 void init_indicator(indicator_t *i, int w, int h) {
     cse(SDL_Init(SDL_INIT_VIDEO));
     i->window = csp(SDL_CreateWindow(

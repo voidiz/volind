@@ -13,15 +13,21 @@ static void quit(int code) {
     exit(code);
 }
 
-static void draw(float *bar_vol) {
+static int draw(float *bar_vol) {
     SDL_ShowWindow(ind.window);
 
     float vol_diff;
+    float previous_vol = iterate_and_get_volume(&aud, 0);
     do {
-        float cur_vol = get_volume(&aud, 0);
-        if (cur_vol < 0) {
-            quit(1);
+        float cur_vol = iterate_and_get_volume(&aud, 0);
+
+        // If the volume changes during animation, directly skip
+        // to the final value of the animation
+        if (previous_vol != cur_vol) {
+            *bar_vol = previous_vol;
         }
+
+        previous_vol = cur_vol;
 
         vol_diff = cur_vol - *bar_vol;
 
@@ -32,25 +38,13 @@ static void draw(float *bar_vol) {
             delta_vol = -1.0f;
         }
 
-        // Background
-        SDL_SetRenderDrawColor(ind.renderer, 255, 255, 255, 0);
-        SDL_RenderClear(ind.renderer);
-
-        // Bar
-        SDL_SetRenderDrawColor(ind.renderer, 255, 0, 0, 0);
-        SDL_Rect bar = {.x = 10,
-                        .y = IND_H - 20,
-                        .w = (IND_W - 20) * (*bar_vol / 100),
-                        .h = 5};
-        SDL_RenderFillRect(ind.renderer, &bar);
-
+        draw_indicator(&ind, *bar_vol, 0);
         SDL_RenderPresent(ind.renderer);
         SDL_Delay(20);
         *bar_vol += delta_vol;
     } while (vol_diff != 0.0f);
 
-    SDL_Delay(500);
-    SDL_HideWindow(ind.window);
+    return SDL_GetTicks();
 }
 
 static int run() {
@@ -62,22 +56,38 @@ static int run() {
         quit(1);
     }
 
-    float bar_vol = 0;
+    float bar_vol = -1.0f;
+    float fade_out_tick = SDL_GetTicks();
+    int block = 1;
     for (;;) {
-        // Block until new volume
-        if (get_volume(&aud, 1) < 0) {
-            quit(1);
-        }
+        // Block until new volume if not fading out
+        iterate_and_get_volume(&aud, block);
 
-        // Iterate again if not ready
-        if (!aud.pa_ready) {
+        // Iterate again if not ready or if volume is still default
+        if (!aud.pa_ready || aud.cur_vol == -1.0f) {
             continue;
         }
 
+        // Set initial value
+        if (bar_vol < 0.0f) {
+            bar_vol = aud.cur_vol;
+        }
+
         // Animate to new volume (aud.cur_vol) from bar_vol
-        // and update bar_vol
+        // and update bar_vol and fade out when done
+        block = 0;
         if (bar_vol != aud.cur_vol) {
-            draw(&bar_vol);
+            fade_out_tick = draw(&bar_vol);
+        } else {
+            int alpha = (int) (255 * (SDL_GetTicks() - fade_out_tick) / FADE_OUT_DURATION_MS);
+            if (alpha <= 255) {
+                draw_indicator(&ind, bar_vol, 0);
+                SDL_RenderPresent(ind.renderer);
+                SDL_Delay(20);
+            } else {
+                SDL_HideWindow(ind.window);
+                block = 1;
+            }
         }
     }
 

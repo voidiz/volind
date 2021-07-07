@@ -21,10 +21,10 @@ int init_audio(audio_t *a);
 void term_audio(audio_t *a);
 
 /*
- * Returns the volume (0-100) or -1 on error.
+ * Runs an iteration of the loop in and returns the (maybe updated) volume.
  * block specifies whether the operation should block until the volume changes
  * (0 does not block, nonzero blocks).
  */
-float get_volume(audio_t *a, int block);
+float iterate_and_get_volume(audio_t *a, int block);
 
-#endif
+#endif // AUDIO_H
