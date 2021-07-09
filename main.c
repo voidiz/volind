@@ -38,9 +38,9 @@ static int draw() {
             delta_vol = -1.0f;
         }
 
-        draw_indicator(&ind, ind.progress, 0);
+        draw_indicator(&ind, ind.progress);
         SDL_RenderPresent(ind.renderer);
-        SDL_Delay(20);
+        SDL_Delay(FRAME_TIME);
         ind.progress += delta_vol;
     } while (vol_diff != 0.0f);
 
@@ -56,23 +56,24 @@ static int run() {
         quit(1);
     }
 
-    float fade_out_tick = SDL_GetTicks();
+    float hide_tick = SDL_GetTicks();
     int block = 1;
     for (;;) {
-        // Block until new volume if not fading out
+        // Block until new volume if not counting down until hide
         iterate_and_get_volume(&aud, block);
 
-        // Animate to new volume (aud.cur_vol) and fade out when done
+        // Animate to new volume (aud.cur_vol) and hide indicator when done
+        // (fades out depending on compositor)
         block = 0;
         if (ind.progress != aud.cur_vol) {
-            fade_out_tick = draw();
+            hide_tick = draw();
         } else {
-            int alpha = roundf(255 * (SDL_GetTicks() - fade_out_tick) /
-                               FADE_OUT_DURATION_MS);
-            if (alpha <= 255) {
-                draw_indicator(&ind, ind.progress, 0);
+            float hide_progress =
+                (SDL_GetTicks() - hide_tick) / FADE_OUT_DURATION_MS;
+            if (hide_progress < 1) {
+                draw_indicator(&ind, ind.progress);
                 SDL_RenderPresent(ind.renderer);
-                SDL_Delay(20);
+                SDL_Delay(FRAME_TIME);
             } else {
                 SDL_HideWindow(ind.window);
                 block = 1;

@@ -26,13 +26,13 @@ void term_indicator(int silent) {
     SDL_Quit();
 }
 
-void draw_indicator(indicator_t *i, int progress, int alpha) {
+void draw_indicator(indicator_t *i, int progress) {
     // Background
-    SDL_SetRenderDrawColor(i->renderer, 255, 255, 255, alpha);
+    SDL_SetRenderDrawColor(i->renderer, 255, 255, 255, 255);
     SDL_RenderClear(i->renderer);
 
     // Bar
-    SDL_SetRenderDrawColor(i->renderer, 102, 153, 204, alpha);
+    SDL_SetRenderDrawColor(i->renderer, 102, 153, 204, 255);
     SDL_Rect bar = {.x = 10,
                     .y = 10,
                     .w = (IND_W - 20) * (progress / 100.0f),
@@ -46,5 +46,7 @@ void init_indicator(indicator_t *i, int w, int h) {
         "volind", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
         SDL_WINDOW_BORDERLESS | SDL_WINDOW_TOOLTIP));
     i->renderer = csp(SDL_CreateRenderer(i->window, -1, 0));
+    cse(SDL_SetRenderDrawBlendMode(i->renderer, SDL_BLENDMODE_BLEND));
+
     i->progress = -1.0f;
 }
