@@ -99,7 +99,7 @@ float iterate_and_get_volume(audio_t *a, int block) {
     return a->cur_vol;
 }
 
-int init_audio(audio_t *a) {
+float init_audio(audio_t *a) {
     a->m_loop = pa_mainloop_new();
     if (!a->m_loop) {
         fprintf(stderr, "pa_mainloop_new() failed\n");
@@ -127,5 +127,16 @@ int init_audio(audio_t *a) {
     a->pa_ready = 0;
     a->cur_vol = -1.0f;
 
-    return 0;
+    for (;;) {
+        // Block until we get the first volume value
+        iterate_and_get_volume(a, 1);
+
+        // Break when pulseaudio is ready and the initial volume has been
+        // queried
+        if (a->pa_ready && a->cur_vol != -1.0f) {
+            break;
+        }
+    }
+
+    return a->cur_vol;
 }

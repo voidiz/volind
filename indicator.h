@@ -11,6 +11,11 @@ typedef struct {
     SDL_Renderer *renderer;
     SDL_Window *window;
 
+    /*
+     * Value between 0-100, initially -1.0f.
+     */
+    float progress;
+
     int error;
 } indicator_t;
 

@@ -16,7 +16,10 @@ typedef struct {
     int pa_ready;
 } audio_t;
 
-int init_audio(audio_t *a);
+/*
+ * Returns the current volume, -1.0f on fail.
+ */
+float init_audio(audio_t *a);
 
 void term_audio(audio_t *a);
 
