@@ -92,6 +92,7 @@ void term_audio(audio_t *a) {
 
 float iterate_and_get_volume(audio_t *a, int block) {
     if (pa_mainloop_iterate(a->m_loop, block, NULL) < 0) {
+        fprintf(stderr, "pa_mainloop_iterate() failed\n");
         term_audio(a);
         exit(1);
     }
