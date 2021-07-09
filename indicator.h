@@ -3,10 +3,22 @@
 
 #include <SDL2/SDL.h>
 
+// Dimensions of the indicator
 #define IND_W 450
 #define IND_H 50
+
+// Time until the indicator is hidden
 #define FADE_OUT_DURATION_MS 500
+
+// Delay between frames (not guaranteed, can be longer)
 #define FRAME_TIME 20 // 50 fps
+
+// Indicator border size in pixels
+#define BORDER_SIZE 10
+
+// Colors
+#define BACKGROUND_COLOR 255, 255, 255
+#define BAR_COLOR 102, 153, 204
 
 typedef struct {
     SDL_Renderer *renderer;

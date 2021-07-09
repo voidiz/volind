@@ -28,15 +28,15 @@ void term_indicator(int silent) {
 
 void draw_indicator(indicator_t *i, int progress) {
     // Background
-    SDL_SetRenderDrawColor(i->renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(i->renderer, BACKGROUND_COLOR, 255);
     SDL_RenderClear(i->renderer);
 
     // Bar
-    SDL_SetRenderDrawColor(i->renderer, 102, 153, 204, 255);
-    SDL_Rect bar = {.x = 10,
-                    .y = 10,
-                    .w = (IND_W - 20) * (progress / 100.0f),
-                    .h = IND_H - 20};
+    SDL_SetRenderDrawColor(i->renderer, BAR_COLOR, 255);
+    SDL_Rect bar = {.x = BORDER_SIZE,
+                    .y = BORDER_SIZE,
+                    .w = (IND_W - 2 * BORDER_SIZE) * (progress / 100.0f),
+                    .h = IND_H - 2 * BORDER_SIZE};
     SDL_RenderFillRect(i->renderer, &bar);
 }
 
